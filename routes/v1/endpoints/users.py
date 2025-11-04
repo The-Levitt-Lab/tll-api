@@ -3,7 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.deps import get_db
+from api.db.session import get_db_session
 from api.schemas import UserCreate, UserRead
 from api.services import (
     AlreadyExistsError,
@@ -19,13 +19,13 @@ router = APIRouter()
 
 
 @router.get("/", response_model=list[UserRead])
-async def list_users(p: PaginationParams = Depends(), db: AsyncSession = Depends(get_db)):
+async def list_users(p: PaginationParams = Depends(), db: AsyncSession = Depends(get_db_session)):
     users = await list_users_service(db, offset=p.offset, limit=p.limit)
     return users
 
 
 @router.post("/", response_model=UserRead, status_code=201)
-async def create_user(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
+async def create_user(user_in: UserCreate, db: AsyncSession = Depends(get_db_session)):
     try:
         user = await create_user_service(db, user_in)
         return user
@@ -34,7 +34,7 @@ async def create_user(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/{user_id}", response_model=UserRead)
-async def get_user(user_id: int, db: AsyncSession = Depends(get_db)):
+async def get_user(user_id: int, db: AsyncSession = Depends(get_db_session)):
     try:
         return await get_user_service(db, user_id)
     except NotFoundError:
