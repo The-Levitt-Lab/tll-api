@@ -19,7 +19,9 @@ router = APIRouter()
 
 
 @router.get("/", response_model=list[UserRead])
-async def list_users(p: PaginationParams = Depends(), db: AsyncSession = Depends(get_db_session)):
+async def list_users(
+    p: PaginationParams = Depends(), db: AsyncSession = Depends(get_db_session)
+):
     users = await list_users_service(db, offset=p.offset, limit=p.limit)
     return users
 
@@ -39,4 +41,3 @@ async def get_user(user_id: int, db: AsyncSession = Depends(get_db_session)):
         return await get_user_service(db, user_id)
     except NotFoundError:
         raise HTTPException(status_code=404, detail="User not found")
-

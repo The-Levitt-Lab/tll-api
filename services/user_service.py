@@ -21,7 +21,9 @@ async def create_user_service(session: AsyncSession, user_in: UserCreate):
     return await create_user(session, user_in)
 
 
-async def list_users_service(session: AsyncSession, *, offset: int = 0, limit: int = 100):
+async def list_users_service(
+    session: AsyncSession, *, offset: int = 0, limit: int = 100
+):
     return await list_users(session, offset=offset, limit=limit)
 
 
@@ -30,4 +32,3 @@ async def get_user_service(session: AsyncSession, user_id: int):
     if user is None:
         raise NotFoundError("User not found")
     return user
-

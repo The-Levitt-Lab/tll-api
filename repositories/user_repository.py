@@ -19,7 +19,9 @@ async def get_user_by_email(session: AsyncSession, email: str) -> Optional[User]
     return result.scalars().first()
 
 
-async def list_users(session: AsyncSession, *, offset: int = 0, limit: int = 100) -> List[User]:
+async def list_users(
+    session: AsyncSession, *, offset: int = 0, limit: int = 100
+) -> List[User]:
     result = await session.execute(select(User).offset(offset).limit(limit))
     return list(result.scalars().all())
 
@@ -31,4 +33,3 @@ async def create_user(session: AsyncSession, user_in: UserCreate) -> User:
     await session.refresh(user)
     await session.commit()
     return user
-
