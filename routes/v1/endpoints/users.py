@@ -3,16 +3,16 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.db.session import get_db_session
-from api.schemas import UserCreate, UserRead
-from api.services import (
+from db.session import get_db_session
+from schemas import UserCreate, UserRead
+from services import (
     AlreadyExistsError,
     NotFoundError,
     get_user_service,
     list_users_service,
     create_user_service,
 )
-from api.utils import PaginationParams
+from utils import PaginationParams
 
 
 router = APIRouter()

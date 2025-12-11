@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.repositories import create_user, get_user_by_email, get_user_by_id, list_users
-from api.schemas import UserCreate
+from repositories import create_user, get_user_by_email, get_user_by_id, list_users
+from schemas import UserCreate
 
 
 class AlreadyExistsError(Exception):

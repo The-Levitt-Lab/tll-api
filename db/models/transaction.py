@@ -1,8 +1,8 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
-from api.db.base import Base
-from api.db.models.user import User
+from db.base import Base
+from db.models.user import User
 
 
 class Transaction(Base):

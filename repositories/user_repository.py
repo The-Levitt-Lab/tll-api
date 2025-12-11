@@ -5,8 +5,8 @@ from typing import List, Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from api.db.models import User
-from api.schemas import UserCreate
+from db.models import User
+from schemas import UserCreate
 
 
 async def get_user_by_id(session: AsyncSession, user_id: int) -> Optional[User]:

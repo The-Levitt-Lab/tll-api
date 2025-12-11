@@ -6,12 +6,12 @@ from typing import AsyncIterator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.routes.v1 import api_router
-from api.core.config import get_settings
-from api.core.logging import configure_logging
-from api.db.base import Base
-import api.db.models
-from api.db.session import engine
+from routes.v1 import api_router
+from core.config import get_settings
+from core.logging import configure_logging
+from db.base import Base
+import db.models
+from db.session import engine
 
 
 settings = get_settings()
