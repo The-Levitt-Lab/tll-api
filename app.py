@@ -10,6 +10,7 @@ from api.routes.v1 import api_router
 from api.core.config import get_settings
 from api.core.logging import configure_logging
 from api.db.base import Base
+import api.db.models
 from api.db.session import engine
 
 
@@ -51,4 +52,3 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
-

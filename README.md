@@ -41,7 +41,7 @@ Environment variables (see `env.example`):
 - `APP_NAME` – app title
 - `ENV` – environment name (development/production)
 - `DEBUG` – enable verbose logging
-- `DATABASE_URL` – SQLAlchemy async URL (defaults to SQLite `sqlite+aiosqlite:///./data.db`)
+- `DATABASE_URL` – SQLAlchemy async URL (defaults to SQLite `sqlite+aiosqlite:///./example.db`)
 - `ALLOWED_ORIGINS` – comma-separated CORS origins
 - `API_V1_PREFIX` – versioned API prefix (default `/api/v1`)
 - `AUTO_CREATE_TABLES` – create tables on startup (dev convenience)
@@ -89,4 +89,3 @@ api/
 
 - Uses async SQLAlchemy 2.x and works out of the box with SQLite. Switch to Postgres by changing `DATABASE_URL`.
 - `AUTO_CREATE_TABLES=true` is for development only; use migrations in production.
-

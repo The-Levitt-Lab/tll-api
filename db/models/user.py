@@ -1,21 +1,15 @@
-from __future__ import annotations
-
-from datetime import datetime
-
-from sqlalchemy import Boolean, DateTime, Integer, String, func
-from sqlalchemy.orm import Mapped, mapped_column
-
+from sqlalchemy import Boolean, Column, Integer, String, DateTime
+from sqlalchemy.sql import func
 from api.db.base import Base
 
 
 class User(Base):
     __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    email: Mapped[str] = mapped_column(String(320), unique=True, index=True, nullable=False)
-    full_name: Mapped[str | None] = mapped_column(String(256), nullable=True)
-    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="1")
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
-
+    id = Column(Integer, primary_key=True, index=True)
+    full_name = Column(String, nullable=False)
+    email = Column(String, unique=True, index=True, nullable=False)
+    balance = Column(Integer, default=0, nullable=False)
+    role = Column(String, default="student", nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
