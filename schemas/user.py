@@ -15,6 +15,13 @@ class UserCreate(UserBase):
 class UserRead(UserBase):
     id: int
     is_active: bool
+    balance: int
+    gift_balance: int
+    role: str
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class UserBalanceUpdate(BaseModel):
+    amount: int
 

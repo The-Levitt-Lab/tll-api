@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import List
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -30,8 +30,32 @@ class Settings(BaseSettings):
     # Dev convenience to auto-create tables at startup
     AUTO_CREATE_TABLES: bool = True
 
+    # Security
+    SECRET_KEY: str = "changeme"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 1 week
+
+    # OAuth Client IDs
+    GOOGLE_CLIENT_ID: str = ""
+    APPLE_CLIENT_ID: str = ""
+
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def assemble_db_connection(cls, v: str | None) -> str:
+        if not v:
+            return "sqlite+aiosqlite:///./data.db"
+        if v.startswith("postgres://"):
+            v = v.replace("postgres://", "postgresql+asyncpg://", 1)
+        elif v.startswith("postgresql://"):
+            v = v.replace("postgresql://", "postgresql+asyncpg://", 1)
+        
+        # asyncpg uses 'ssl' param, not 'sslmode'
+        if "sslmode=require" in v:
+            v = v.replace("sslmode=require", "ssl=require")
+        return v
+
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(".env", ".env.development"),
         env_file_encoding="utf-8",
         case_sensitive=False,
     )

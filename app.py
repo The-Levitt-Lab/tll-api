@@ -14,6 +14,8 @@ import db.models
 from db.session import engine
 
 
+__version__ = "0.1.0"
+
 settings = get_settings()
 
 

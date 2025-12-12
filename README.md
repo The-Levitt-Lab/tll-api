@@ -2,34 +2,28 @@
 
 ### Quickstart
 
-1. Create and activate a virtualenv:
+1. Install dependencies with [uv](https://docs.astral.sh/uv/):
+(note from ben: uv ROCKS and makes python development roughly 10,000x easier)
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
+cd api
+uv sync
 ```
 
-2. Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-3. Configure environment:
+2. Configure environment:
 
 ```bash
 cp env.example .env
 ```
 
-4. Run the API (hot reload):
+3. Run the API (dev server hot reload):
 
 ```bash
 # Option A: FastAPI CLI (recommended)
-cd /Users/benklosky/Documents/vittcoin
-fastapi dev api/app.py --host 0.0.0.0 --port 8000
+uv run fastapi dev app.py --host 0.0.0.0 --port 8000
 
 # Option B: Uvicorn directly
-uvicorn api.app:app --reload --host 0.0.0.0 --port 8000
+uv run uvicorn app:app --reload --host 0.0.0.0 --port 8000
 ```
 
 Open the docs at `http://localhost:8000/docs`.
@@ -80,7 +74,8 @@ api/
   utils/
     pagination.py
   app.py
-  requirements.txt
+  pyproject.toml
+  uv.lock
   env.example
   README.md
 ```

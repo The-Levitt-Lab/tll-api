@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from repositories import create_user, get_user_by_email, get_user_by_id, list_users
+from repositories import create_user, get_user_by_email, get_user_by_id, list_users, update_user
 from schemas import UserCreate
 
 
@@ -32,3 +32,9 @@ async def get_user_service(session: AsyncSession, user_id: int):
     if user is None:
         raise NotFoundError("User not found")
     return user
+
+
+async def update_user_balance_service(session: AsyncSession, user_id: int, amount: int):
+    user = await get_user_service(session, user_id)
+    user.balance += amount
+    return await update_user(session, user)
