@@ -22,6 +22,18 @@ async def get_transactions_by_user_id(
     return list(result.scalars().all())
 
 
+async def get_all_transactions(
+    session: AsyncSession, *, offset: int = 0, limit: int = 100
+) -> List[Transaction]:
+    result = await session.execute(
+        select(Transaction)
+        .order_by(Transaction.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+    )
+    return list(result.scalars().all())
+
+
 async def create_transaction(session: AsyncSession, transaction_in: TransactionCreate) -> Transaction:
     transaction = Transaction(
         user_id=transaction_in.user_id,

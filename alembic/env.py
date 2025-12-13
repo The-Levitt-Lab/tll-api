@@ -9,7 +9,7 @@ from alembic import context
 from db.base import Base
 from core.config import get_settings
 # Import models so Base.metadata is populated
-from db.models import user, transaction, request  # noqa
+from db.models import user, transaction, request, challenge  # noqa
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

@@ -5,7 +5,12 @@ from .user_repository import (
     list_users,
     update_user,
 )
-from .transaction_repository import get_transactions_by_user_id, create_transaction
+from .transaction_repository import (
+    get_transactions_by_user_id,
+    create_transaction,
+    get_all_transactions,
+)
+from .challenge_repository import get_challenges, create_challenge
 
 __all__ = [
     "create_user",
@@ -15,4 +20,7 @@ __all__ = [
     "update_user",
     "get_transactions_by_user_id",
     "create_transaction",
+    "get_all_transactions",
+    "get_challenges",
+    "create_challenge",
 ]
