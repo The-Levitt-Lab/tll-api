@@ -69,5 +69,12 @@ async def verify_token(provider: AuthProvider, token: str) -> dict:
         return verify_google_token(token)
     elif provider == AuthProvider.APPLE:
         return await verify_apple_token(token)
+    elif provider == AuthProvider.DEV:
+        if settings.ENV == "production":
+             raise HTTPException(status_code=400, detail="Dev login not allowed in production")
+        return {
+            "email": token,
+            "full_name": token.split("@")[0]
+        }
     else:
         raise HTTPException(status_code=400, detail="Unsupported provider")

@@ -6,8 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.dependencies import require_admin
 from db.session import get_db_session
 from db.models import User
-from schemas import UserRead
-from schemas.user import UserBalanceUpdate
+from schemas import UserBalanceUpdate, UserRead
 from services import NotFoundError
 from services.user_service import update_user_balance_service, get_user_service
 
@@ -23,7 +22,13 @@ async def add_balance(
 ):
     """Add to a user's balance. Requires admin role."""
     try:
-        user = await update_user_balance_service(db, user_id, data.amount)
+        user = await update_user_balance_service(
+            db, 
+            user_id, 
+            data.amount, 
+            description="Admin added balance",
+            admin_id=admin.id
+        )
         return user
     except NotFoundError:
         raise HTTPException(status_code=404, detail="User not found")
@@ -38,8 +43,13 @@ async def subtract_balance(
 ):
     """Subtract from a user's balance. Requires admin role."""
     try:
-        user = await update_user_balance_service(db, user_id, -data.amount)
+        user = await update_user_balance_service(
+            db, 
+            user_id, 
+            -data.amount, 
+            description="Admin subtracted balance",
+            admin_id=admin.id
+        )
         return user
     except NotFoundError:
         raise HTTPException(status_code=404, detail="User not found")
-

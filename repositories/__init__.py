@@ -5,6 +5,7 @@ from .user_repository import (
     list_users,
     update_user,
 )
+from .transaction_repository import get_transactions_by_user_id, create_transaction
 
 __all__ = [
     "create_user",
@@ -12,5 +13,6 @@ __all__ = [
     "get_user_by_id",
     "list_users",
     "update_user",
+    "get_transactions_by_user_id",
+    "create_transaction",
 ]
-

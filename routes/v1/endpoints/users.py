@@ -3,8 +3,12 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.dependencies import get_current_user
+from db.models import User
 from db.session import get_db_session
+from repositories import get_transactions_by_user_id
 from schemas import UserCreate, UserRead
+from schemas.transaction import TransactionRead
 from services import (
     AlreadyExistsError,
     NotFoundError,
@@ -33,6 +37,23 @@ async def create_user(user_in: UserCreate, db: AsyncSession = Depends(get_db_ses
         return user
     except AlreadyExistsError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@router.get("/me", response_model=UserRead)
+async def get_me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+
+@router.get("/me/transactions", response_model=list[TransactionRead])
+async def get_my_transactions(
+    p: PaginationParams = Depends(),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+):
+    transactions = await get_transactions_by_user_id(
+        db, current_user.id, offset=p.offset, limit=p.limit
+    )
+    return transactions
 
 
 @router.get("/{user_id}", response_model=UserRead)
