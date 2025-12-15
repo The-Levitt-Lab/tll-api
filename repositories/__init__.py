@@ -11,6 +11,7 @@ from .transaction_repository import (
     get_all_transactions,
 )
 from .challenge_repository import get_challenges, create_challenge
+from .request_repository import get_requests_by_user_id
 
 __all__ = [
     "create_user",
@@ -23,4 +24,5 @@ __all__ = [
     "get_all_transactions",
     "get_challenges",
     "create_challenge",
+    "get_requests_by_user_id",
 ]

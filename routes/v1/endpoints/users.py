@@ -6,8 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.dependencies import get_current_user
 from db.models import User
 from db.session import get_db_session
-from repositories import get_transactions_by_user_id
-from schemas import UserCreate, UserRead
+from repositories import get_transactions_by_user_id, get_requests_by_user_id
+from schemas import UserCreate, UserRead, RequestRead
 from schemas.transaction import TransactionRead
 from services import (
     AlreadyExistsError,
@@ -54,6 +54,18 @@ async def get_my_transactions(
         db, current_user.id, offset=p.offset, limit=p.limit
     )
     return transactions
+
+
+@router.get("/me/requests", response_model=list[RequestRead])
+async def get_my_requests(
+    p: PaginationParams = Depends(),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+):
+    requests = await get_requests_by_user_id(
+        db, current_user.id, offset=p.offset, limit=p.limit
+    )
+    return requests
 
 
 @router.get("/{user_id}", response_model=UserRead)
