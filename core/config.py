@@ -17,9 +17,9 @@ class Settings(BaseSettings):
     ENV: str = "development"
     DEBUG: bool = True
 
-    # Async DB URL (SQLite by default). Example for Postgres:
+    # Async DB URL. Example for Postgres:
     # postgresql+asyncpg://user:pass@localhost:5432/dbname
-    DATABASE_URL: str = "sqlite+aiosqlite:///./data.db"
+    DATABASE_URL: str | None = None
 
     # Comma-separated CORS origins
     ALLOWED_ORIGINS: str = ""
@@ -43,7 +43,8 @@ class Settings(BaseSettings):
     @classmethod
     def assemble_db_connection(cls, v: str | None) -> str:
         if not v:
-            return "sqlite+aiosqlite:///./data.db"
+            raise ValueError("DATABASE_URL is missing")
+        
         if v.startswith("postgres://"):
             v = v.replace("postgres://", "postgresql+asyncpg://", 1)
         elif v.startswith("postgresql://"):
