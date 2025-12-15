@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import List
 
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import Transaction
@@ -15,6 +16,10 @@ async def get_transactions_by_user_id(
     result = await session.execute(
         select(Transaction)
         .where(Transaction.user_id == user_id)
+        .options(
+            selectinload(Transaction.user),
+            selectinload(Transaction.recipient)
+        )
         .order_by(Transaction.created_at.desc())
         .offset(offset)
         .limit(limit)
@@ -27,6 +32,10 @@ async def get_all_transactions(
 ) -> List[Transaction]:
     result = await session.execute(
         select(Transaction)
+        .options(
+            selectinload(Transaction.user),
+            selectinload(Transaction.recipient)
+        )
         .order_by(Transaction.created_at.desc())
         .offset(offset)
         .limit(limit)

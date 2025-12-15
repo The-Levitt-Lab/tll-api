@@ -18,7 +18,7 @@ class TransactionCreate(TransactionBase):
 class TransactionRead(TransactionBase):
     id: int
     created_at: datetime
-    # We might want to include the admin name if relevant, but let's keep it simple for now
+    user_name: str | None = None
+    recipient_name: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
-

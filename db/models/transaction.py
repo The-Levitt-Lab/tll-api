@@ -25,3 +25,15 @@ class Transaction(Base):
     admin = relationship(
         "User", foreign_keys=[admin_id], backref="administered_transactions"
     )
+
+    @property
+    def user_name(self):
+        if self.user:
+            return self.user.full_name or self.user.username
+        return None
+
+    @property
+    def recipient_name(self):
+        if self.recipient:
+            return self.recipient.full_name or self.recipient.username
+        return None
