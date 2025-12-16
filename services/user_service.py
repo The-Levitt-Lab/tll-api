@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.exceptions import AlreadyExistsError, NotFoundError
 from repositories import (
     create_transaction,
     create_user,
@@ -14,12 +15,6 @@ from schemas import UserCreate
 from schemas.transaction import TransactionCreate
 
 
-class AlreadyExistsError(Exception):
-    pass
-
-
-class NotFoundError(Exception):
-    pass
 
 
 async def create_user_service(session: AsyncSession, user_in: UserCreate):

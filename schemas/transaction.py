@@ -13,6 +13,14 @@ class TransactionBase(BaseModel):
 class TransactionCreate(TransactionBase):
     user_id: int
     admin_id: int | None = None
+    recipient_id: int | None = None
+    request_id: int | None = None
+
+
+class TransferCreate(BaseModel):
+    recipient_id: int
+    amount: int
+    description: str | None = None
 
 
 class TransactionRead(TransactionBase):

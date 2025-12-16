@@ -50,6 +50,8 @@ async def create_transaction(session: AsyncSession, transaction_in: TransactionC
         amount=transaction_in.amount,
         type=transaction_in.type,
         description=transaction_in.description,
+        recipient_id=transaction_in.recipient_id,
+        request_id=transaction_in.request_id,
     )
     session.add(transaction)
     await session.commit()

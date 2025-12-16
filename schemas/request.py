@@ -20,6 +20,7 @@ class RequestRead(RequestBase):
     sender_id: int
     recipient_id: int
     status: str
+    is_active: bool
     created_at: datetime
     updated_at: Optional[datetime]
     sender: UserRead
