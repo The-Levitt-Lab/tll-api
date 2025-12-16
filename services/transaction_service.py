@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from db.models import User, Transaction
 from schemas.transaction import TransactionCreate, TransferCreate
@@ -20,7 +21,10 @@ async def transfer_funds_service(session: AsyncSession, transfer_in: TransferCre
     if not sender:
         raise NotFoundError("Sender not found")
         
-    if sender.balance < transfer_in.amount:
+    if transfer_in.use_gift_balance:
+        if sender.gift_balance < transfer_in.amount:
+            raise BadRequestError("Insufficient gift balance")
+    elif sender.balance < transfer_in.amount:
         raise BadRequestError("Insufficient balance")
 
     # Fetch recipient
@@ -32,18 +36,25 @@ async def transfer_funds_service(session: AsyncSession, transfer_in: TransferCre
         raise NotFoundError("Recipient not found")
         
     # Update balances
-    sender.balance -= transfer_in.amount
+    if transfer_in.use_gift_balance:
+        sender.gift_balance -= transfer_in.amount
+    else:
+        sender.balance -= transfer_in.amount
     recipient.balance += transfer_in.amount
     
     session.add(sender)
     session.add(recipient)
     
     # Create transaction for Sender (Debit)
+    sender_desc_prefix = f"Sent to {recipient.full_name or recipient.username}"
+    if transfer_in.use_gift_balance:
+        sender_desc_prefix += " (Gift Balance)"
+
     debit_tx = Transaction(
         user_id=sender_id,
         amount=-transfer_in.amount,
         type="transfer",
-        description=f"Sent to {recipient.full_name or recipient.username}: {transfer_in.description or 'No description'}",
+        description=f"{sender_desc_prefix}: {transfer_in.description or 'No description'}",
         recipient_id=transfer_in.recipient_id
     )
     session.add(debit_tx)
@@ -59,6 +70,15 @@ async def transfer_funds_service(session: AsyncSession, transfer_in: TransferCre
     session.add(credit_tx)
     
     await session.commit()
-    await session.refresh(debit_tx)
     
-    return debit_tx
+    # Re-fetch transaction with relationships
+    stmt = (
+        select(Transaction)
+        .where(Transaction.id == debit_tx.id)
+        .options(
+            selectinload(Transaction.user),
+            selectinload(Transaction.recipient)
+        )
+    )
+    result = await session.execute(stmt)
+    return result.scalars().first()

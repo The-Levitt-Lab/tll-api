@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from db.models import Request, User
 from repositories.transaction_repository import create_transaction
@@ -30,9 +31,15 @@ async def create_request_service(session: AsyncSession, request_in: RequestCreat
     
     session.add(request)
     await session.commit()
-    await session.refresh(request)
     
-    return request
+    # Re-fetch request with relationships to avoid lazy loading issues
+    stmt = (
+        select(Request)
+        .where(Request.id == request.id)
+        .options(selectinload(Request.sender), selectinload(Request.recipient))
+    )
+    result = await session.execute(stmt)
+    return result.scalars().first()
 
 async def pay_request_service(session: AsyncSession, request_id: int, user_id: int):
     # Fetch request
@@ -101,4 +108,12 @@ async def pay_request_service(session: AsyncSession, request_id: int, user_id: i
     session.add(request)
     
     await session.commit()
-    return request
+    
+    # Re-fetch request with relationships to avoid lazy loading issues
+    stmt = (
+        select(Request)
+        .where(Request.id == request_id)
+        .options(selectinload(Request.sender), selectinload(Request.recipient))
+    )
+    result = await session.execute(stmt)
+    return result.scalars().first()

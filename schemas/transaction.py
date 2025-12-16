@@ -15,12 +15,14 @@ class TransactionCreate(TransactionBase):
     admin_id: int | None = None
     recipient_id: int | None = None
     request_id: int | None = None
+    shop_item_id: int | None = None
 
 
 class TransferCreate(BaseModel):
     recipient_id: int
     amount: int
     description: str | None = None
+    use_gift_balance: bool = False
 
 
 class TransactionRead(TransactionBase):
@@ -28,5 +30,6 @@ class TransactionRead(TransactionBase):
     created_at: datetime
     user_name: str | None = None
     recipient_name: str | None = None
+    shop_item_id: int | None = None
 
     model_config = ConfigDict(from_attributes=True)
