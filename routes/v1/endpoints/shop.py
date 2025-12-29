@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.session import get_db_session
-from core.dependencies import get_current_user
+from core.dependencies import get_current_user, require_admin
 from db.models import User
 from schemas.shop_item import ShopItemRead, ShopItemCreate
 from schemas.transaction import TransactionRead
@@ -14,9 +14,9 @@ router = APIRouter()
 @router.get("/", response_model=list[ShopItemRead])
 async def list_shop_items(
     db: AsyncSession = Depends(get_db_session),
-    current_user: User = Depends(get_current_user),
+    _current_user: User = Depends(get_current_user),
 ):
-    """List all available shop items."""
+    """List all available shop items (requires authentication)."""
     service = ShopService(db)
     return await service.list_items()
 
@@ -25,9 +25,9 @@ async def list_shop_items(
 async def create_shop_item(
     item_data: ShopItemCreate,
     db: AsyncSession = Depends(get_db_session),
-    current_user: User = Depends(get_current_user),
+    _admin: User = Depends(require_admin),
 ):
-    """Create a new shop item."""
+    """Create a new shop item (admin only)."""
     service = ShopService(db)
     return await service.create_item(item_data)
 
@@ -36,9 +36,9 @@ async def create_shop_item(
 async def delete_shop_item(
     item_id: int,
     db: AsyncSession = Depends(get_db_session),
-    current_user: User = Depends(get_current_user),
+    _admin: User = Depends(require_admin),
 ):
-    """Delete a shop item."""
+    """Delete a shop item (admin only)."""
     service = ShopService(db)
     await service.delete_item(item_id)
 
@@ -49,6 +49,6 @@ async def purchase_shop_item(
     db: AsyncSession = Depends(get_db_session),
     current_user: User = Depends(get_current_user),
 ):
-    """Purchase a shop item."""
+    """Purchase a shop item (requires authentication)."""
     service = ShopService(db)
     return await service.purchase_item(current_user.id, item_id)

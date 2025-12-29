@@ -13,9 +13,9 @@ class Settings(BaseSettings):
     Defaults are safe for local development. Override via environment variables.
     """
 
-    APP_NAME: str = "Vittcoin API"
+    APP_NAME: str = "TLL API"
     ENV: str = "development"
-    DEBUG: bool = True
+    DEBUG: bool = False
 
     # Async DB URL. Example for Postgres:
     # postgresql+asyncpg://user:pass@localhost:5432/dbname
@@ -30,14 +30,16 @@ class Settings(BaseSettings):
     # Dev convenience to auto-create tables at startup
     AUTO_CREATE_TABLES: bool = True
 
-    # Security
-    SECRET_KEY: str = "changeme"
+    # Security - used for internal JWT signing (after Clerk verification)
+    SECRET_KEY: str = Field(default="dev-secret-key-change-in-production-min-32-chars")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 1 week
 
-    # OAuth Client IDs
-    GOOGLE_CLIENT_ID: str = ""
-    APPLE_CLIENT_ID: str = ""
+    # Clerk Authentication
+    # Your Clerk instance domain (e.g., "https://your-app.clerk.accounts.dev")
+    CLERK_ISSUER: str = ""
+    # Clerk publishable key (for validation)
+    CLERK_PUBLISHABLE_KEY: str = ""
 
     @field_validator("DATABASE_URL", mode="before")
     @classmethod

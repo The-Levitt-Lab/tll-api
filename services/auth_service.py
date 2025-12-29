@@ -1,80 +1,168 @@
-from fastapi import HTTPException
-from google.auth.transport import requests as google_requests
-from google.oauth2 import id_token
+"""Clerk authentication service.
+
+Verifies Clerk session tokens (JWTs) using Clerk's JWKS endpoint.
+"""
+from __future__ import annotations
+
+import httpx
 import jwt
 from jwt.algorithms import RSAAlgorithm
-import httpx
+from fastapi import HTTPException, status
 
 from core.config import get_settings
-from schemas.auth import AuthProvider
 
 settings = get_settings()
 
+# Cache for JWKS keys to avoid fetching on every request
+_jwks_cache: dict | None = None
 
-def verify_google_token(token: str) -> dict:
-    # Google's library does its own requests, which are synchronous.
-    # To be fully async we'd need to run this in a threadpool, 
-    # but for now we focus on Apple since that was the user's issue.
-    try:
-        # If GOOGLE_CLIENT_ID is not set, we pass None to skip audience check
-        audience = settings.GOOGLE_CLIENT_ID if settings.GOOGLE_CLIENT_ID else None
+
+async def fetch_clerk_jwks() -> dict:
+    """Fetch Clerk's JWKS (JSON Web Key Set) for token verification."""
+    global _jwks_cache
+    if _jwks_cache is not None:
+        return _jwks_cache
+    
+    if not settings.CLERK_ISSUER:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Clerk issuer not configured"
+        )
+    
+    # Clerk JWKS endpoint
+    issuer = settings.CLERK_ISSUER.rstrip("/")
+    jwks_url = f"{issuer}/.well-known/jwks.json"
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.get(jwks_url)
+        response.raise_for_status()
+        _jwks_cache = response.json()
+        return _jwks_cache
+
+
+def clear_jwks_cache() -> None:
+    """Clear the JWKS cache (useful for testing or key rotation)."""
+    global _jwks_cache
+    _jwks_cache = None
+
+
+async def verify_clerk_token(token: str) -> dict:
+    """
+    Verify a Clerk session token and return the decoded claims.
+    
+    Args:
+        token: The Clerk session token (JWT) from the Authorization header
         
-        id_info = id_token.verify_oauth2_token(token, google_requests.Request(), audience=audience)
-        return {
-            "email": id_info["email"], 
-            "full_name": id_info.get("name")
-        }
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=f"Invalid Google token: {str(e)}")
-
-
-async def verify_apple_token(token: str) -> dict:
-    try:
-        # Fetch public keys asynchronously
-        apple_keys_url = "https://appleid.apple.com/auth/keys"
-        async with httpx.AsyncClient() as client:
-            response = await client.get(apple_keys_url)
-            response.raise_for_status()
-            keys = response.json()["keys"]
+    Returns:
+        dict with user information including:
+        - sub: Clerk user ID
+        - email: User's email (if available)
+        - Additional claims from the token
         
-        header = jwt.get_unverified_header(token)
-        kid = header.get("kid")
+    Raises:
+        HTTPException: If token is invalid or expired
+    """
+    try:
+        # Get the unverified header to find the key ID
+        unverified_header = jwt.get_unverified_header(token)
+        kid = unverified_header.get("kid")
+        
         if not kid:
-             raise HTTPException(status_code=400, detail="Invalid token header")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token: missing key ID"
+            )
         
-        key_data = next((k for k in keys if k["kid"] == kid), None)
+        # Fetch JWKS and find the matching key
+        jwks = await fetch_clerk_jwks()
+        key_data = next((k for k in jwks.get("keys", []) if k.get("kid") == kid), None)
+        
         if not key_data:
-             raise HTTPException(status_code=400, detail="Invalid token key id")
-
+            # Key not found - clear cache and retry once (key rotation)
+            clear_jwks_cache()
+            jwks = await fetch_clerk_jwks()
+            key_data = next((k for k in jwks.get("keys", []) if k.get("kid") == kid), None)
+            
+            if not key_data:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid token: key not found"
+                )
+        
+        # Convert JWK to public key
         public_key = RSAAlgorithm.from_jwk(key_data)
         
-        audience = settings.APPLE_CLIENT_ID if settings.APPLE_CLIENT_ID else None
+        # Build verification options
+        issuer = settings.CLERK_ISSUER.rstrip("/")
         
-        options = {"verify_exp": True}
-        if not audience:
-             options["verify_aud"] = False
-             
-        decoded = jwt.decode(token, public_key, algorithms=["RS256"], audience=audience, options=options)
+        # Decode and verify the token
+        decoded = jwt.decode(
+            token,
+            public_key,
+            algorithms=["RS256"],
+            issuer=issuer,
+            options={
+                "verify_exp": True,
+                "verify_iss": True,
+                "verify_aud": False,  # Clerk tokens don't always have audience
+            }
+        )
         
-        return {
-            "email": decoded["email"],
-            "full_name": None 
-        }
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid Apple token: {str(e)}")
+        return decoded
+        
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired"
+        )
+    except jwt.InvalidIssuerError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token issuer"
+        )
+    except jwt.PyJWTError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Invalid token: {str(e)}"
+        )
+    except httpx.HTTPError as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Unable to verify token: authentication service unavailable"
+        )
 
 
-async def verify_token(provider: AuthProvider, token: str) -> dict:
-    if provider == AuthProvider.GOOGLE:
-        return verify_google_token(token)
-    elif provider == AuthProvider.APPLE:
-        return await verify_apple_token(token)
-    elif provider == AuthProvider.DEV:
-        if settings.ENV == "production":
-             raise HTTPException(status_code=400, detail="Dev login not allowed in production")
-        return {
-            "email": token,
-            "full_name": token.split("@")[0]
-        }
-    else:
-        raise HTTPException(status_code=400, detail="Unsupported provider")
+async def get_clerk_user_info(token: str) -> dict:
+    """
+    Extract user information from a verified Clerk token.
+    
+    Returns:
+        dict with:
+        - clerk_user_id: The Clerk user ID (sub claim)
+        - email: User's email address
+        - full_name: User's full name (if available)
+    """
+    claims = await verify_clerk_token(token)
+    
+    # Extract user info from claims
+    # Clerk puts email in different places depending on session type
+    email = claims.get("email") or claims.get("primary_email_address")
+    
+    # Full name might be in various places
+    full_name = None
+    if claims.get("first_name") or claims.get("last_name"):
+        first = claims.get("first_name", "")
+        last = claims.get("last_name", "")
+        full_name = f"{first} {last}".strip()
+    
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Token does not contain email address"
+        )
+    
+    return {
+        "clerk_user_id": claims.get("sub"),
+        "email": email,
+        "full_name": full_name,
+    }

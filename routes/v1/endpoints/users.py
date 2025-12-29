@@ -3,18 +3,16 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.dependencies import get_current_user
+from core.dependencies import get_current_user, require_admin
 from db.models import User
 from db.session import get_db_session
 from repositories import get_transactions_by_user_id, get_requests_by_user_id
-from schemas import UserCreate, UserRead, RequestRead, LeaderboardEntry
+from schemas import UserRead, RequestRead, LeaderboardEntry
 from schemas.transaction import TransactionRead
 from services import (
-    AlreadyExistsError,
     NotFoundError,
     get_user_service,
     list_users_service,
-    create_user_service,
     get_leaderboard_service,
 )
 from utils import PaginationParams
@@ -25,30 +23,28 @@ router = APIRouter()
 
 @router.get("/", response_model=list[UserRead])
 async def list_users(
-    p: PaginationParams = Depends(), db: AsyncSession = Depends(get_db_session)
+    p: PaginationParams = Depends(),
+    db: AsyncSession = Depends(get_db_session),
+    _admin: User = Depends(require_admin),
 ):
+    """List all users (admin only)."""
     users = await list_users_service(db, offset=p.offset, limit=p.limit)
     return users
 
 
 @router.get("/leaderboard", response_model=list[LeaderboardEntry])
 async def get_leaderboard(
-    p: PaginationParams = Depends(), db: AsyncSession = Depends(get_db_session)
+    p: PaginationParams = Depends(),
+    db: AsyncSession = Depends(get_db_session),
+    _current_user: User = Depends(get_current_user),
 ):
+    """Get the leaderboard (requires authentication)."""
     return await get_leaderboard_service(db, offset=p.offset, limit=p.limit)
-
-
-@router.post("/", response_model=UserRead, status_code=201)
-async def create_user(user_in: UserCreate, db: AsyncSession = Depends(get_db_session)):
-    try:
-        user = await create_user_service(db, user_in)
-        return user
-    except AlreadyExistsError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 @router.get("/me", response_model=UserRead)
 async def get_me(current_user: User = Depends(get_current_user)):
+    """Get the current authenticated user's profile."""
     return current_user
 
 
@@ -58,6 +54,7 @@ async def get_my_transactions(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
 ):
+    """Get the current user's transactions."""
     transactions = await get_transactions_by_user_id(
         db, current_user.id, offset=p.offset, limit=p.limit
     )
@@ -70,6 +67,7 @@ async def get_my_requests(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
 ):
+    """Get the current user's payment requests."""
     requests = await get_requests_by_user_id(
         db, current_user.id, offset=p.offset, limit=p.limit
     )
@@ -77,7 +75,12 @@ async def get_my_requests(
 
 
 @router.get("/{user_id}", response_model=UserRead)
-async def get_user(user_id: int, db: AsyncSession = Depends(get_db_session)):
+async def get_user(
+    user_id: int,
+    db: AsyncSession = Depends(get_db_session),
+    _current_user: User = Depends(get_current_user),
+):
+    """Get a user by ID (requires authentication)."""
     try:
         return await get_user_service(db, user_id)
     except NotFoundError:
