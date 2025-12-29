@@ -40,6 +40,8 @@ class Settings(BaseSettings):
     CLERK_ISSUER: str = ""
     # Clerk publishable key (for validation)
     CLERK_PUBLISHABLE_KEY: str = ""
+    # Clerk webhook signing secret (from Clerk Dashboard > Webhooks)
+    CLERK_WEBHOOK_SECRET: str = ""
 
     @field_validator("DATABASE_URL", mode="before")
     @classmethod

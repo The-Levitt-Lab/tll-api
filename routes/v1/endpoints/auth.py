@@ -30,15 +30,16 @@ async def login(data: LoginRequest, db: AsyncSession = Depends(get_db_session)) 
     user_info = await get_clerk_user_info(data.token)
     
     email = user_info["email"]
+    clerk_user_id = user_info["clerk_user_id"]
     # Prefer passed full_name, then token full_name, then fallback to email prefix
     full_name = data.full_name or user_info.get("full_name") or email.split("@")[0]
     
-    # 2. Check if user exists
+    # 2. Check if user exists (by clerk_user_id first, then email for backwards compatibility)
     user = await get_user_by_email(db, email)
     if not user:
         # 3. Create user if not exists
         try:
-            user_in = UserCreate(email=email, full_name=full_name)
+            user_in = UserCreate(email=email, full_name=full_name, clerk_user_id=clerk_user_id)
             user = await create_user_service(db, user_in)
         except (IntegrityError, AlreadyExistsError):
             # Race condition: another request created this user simultaneously
@@ -48,6 +49,12 @@ async def login(data: LoginRequest, db: AsyncSession = Depends(get_db_session)) 
             if not user:
                 # This shouldn't happen, but handle it gracefully
                 raise
+    elif user.clerk_user_id is None and clerk_user_id:
+        # Backfill clerk_user_id for existing users who don't have it yet
+        user.clerk_user_id = clerk_user_id
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
     
     # 4. Create internal access token
     access_token = create_access_token(user.id)

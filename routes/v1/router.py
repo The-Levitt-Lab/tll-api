@@ -8,6 +8,7 @@ from .endpoints.requests import router as requests_router
 from .endpoints.transactions import router as transactions_router
 from .endpoints.shop import router as shop_router
 from .endpoints.challenges import router as challenges_router
+from .endpoints.webhooks import router as webhooks_router
 
 api_router = APIRouter()
 
@@ -19,3 +20,4 @@ api_router.include_router(shop_router, prefix="/shop", tags=["shop"])
 api_router.include_router(challenges_router, prefix="/challenges", tags=["challenges"])
 api_router.include_router(auth_router, prefix="/auth", tags=["auth"])
 api_router.include_router(admin_router, prefix="/admin", tags=["admin"])
+api_router.include_router(webhooks_router, prefix="/webhooks", tags=["webhooks"])

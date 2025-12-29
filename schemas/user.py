@@ -10,7 +10,7 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    pass
+    clerk_user_id: str | None = None
 
 
 class UserRead(UserBase):

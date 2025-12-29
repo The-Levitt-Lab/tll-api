@@ -28,6 +28,11 @@ async def get_user_by_username(session: AsyncSession, username: str) -> Optional
     return result.scalars().first()
 
 
+async def get_user_by_clerk_id(session: AsyncSession, clerk_user_id: str) -> Optional[User]:
+    result = await session.execute(select(User).where(User.clerk_user_id == clerk_user_id))
+    return result.scalars().first()
+
+
 async def list_users(
     session: AsyncSession, *, offset: int = 0, limit: int = 100
 ) -> List[User]:
@@ -89,7 +94,12 @@ async def create_user(session: AsyncSession, user_in: UserCreate) -> User:
     full_name = user_in.full_name or ""
     username = await _generate_unique_username(session, full_name)
     
-    user = User(email=str(user_in.email), full_name=full_name, username=username)
+    user = User(
+        email=str(user_in.email), 
+        full_name=full_name, 
+        username=username,
+        clerk_user_id=user_in.clerk_user_id,
+    )
     session.add(user)
     
     try:

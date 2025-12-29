@@ -1,5 +1,6 @@
 from .user_repository import (
     create_user,
+    get_user_by_clerk_id,
     get_user_by_email,
     get_user_by_id,
     list_users,
@@ -16,6 +17,7 @@ from .request_repository import get_requests_by_user_id
 
 __all__ = [
     "create_user",
+    "get_user_by_clerk_id",
     "get_user_by_email",
     "get_user_by_id",
     "list_users",

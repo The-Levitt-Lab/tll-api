@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.config import get_settings
 from db.session import get_db_session
 from db.models import User
-from repositories import get_user_by_id, get_user_by_email
+from repositories import get_user_by_id, get_user_by_email, get_user_by_clerk_id
 from services.auth_service import verify_clerk_token
 
 settings = get_settings()
@@ -85,13 +85,19 @@ async def _authenticate_with_clerk_token(
     except HTTPException:
         raise credentials_exception
     
-    # Extract email from Clerk claims
+    # Extract user identifiers from Clerk claims
+    clerk_user_id = claims.get("sub")
     email = claims.get("email") or claims.get("primary_email_address")
-    if not email:
-        raise credentials_exception
     
-    # Find the user by email
-    user = await get_user_by_email(db, email)
+    # Try to find user by clerk_user_id first (more reliable)
+    user = None
+    if clerk_user_id:
+        user = await get_user_by_clerk_id(db, clerk_user_id)
+    
+    # Fallback to email lookup for backwards compatibility
+    if user is None and email:
+        user = await get_user_by_email(db, email)
+    
     if user is None:
         # User doesn't exist yet - they need to call /auth/login first
         raise HTTPException(
