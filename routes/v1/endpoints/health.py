@@ -12,6 +12,6 @@ from db.session import get_db_session
 router = APIRouter()
 
 
-@router.get("/health")
+@router.get("")
 async def health() -> dict[str, str]:
     return {"status": "ok", "time": datetime.now(timezone.utc).isoformat()}

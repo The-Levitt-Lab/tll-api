@@ -62,7 +62,7 @@ async def pay_request_service(session: AsyncSession, request_id: int, user_id: i
     payer = result_user.scalars().first()
     
     if not payer:
-         raise NotFoundError("User not found")
+        raise NotFoundError("User not found")
          
     if payer.balance < request.amount:
         raise BadRequestError("Insufficient balance")

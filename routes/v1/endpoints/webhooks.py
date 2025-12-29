@@ -22,7 +22,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.config import get_settings
 from db.session import get_db_session
 from repositories import get_user_by_clerk_id, get_user_by_email, update_user
-from repositories.user_repository import create_user, _generate_unique_username
 from schemas.user import UserCreate
 
 logger = logging.getLogger(__name__)

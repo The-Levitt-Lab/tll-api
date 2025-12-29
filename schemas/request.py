@@ -1,14 +1,15 @@
-from datetime import datetime
-from typing import Optional
+from __future__ import annotations
 
-from pydantic import BaseModel
+from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict
 
 from .user import UserRead
 
 
 class RequestBase(BaseModel):
     amount: int
-    description: Optional[str] = None
+    description: str | None = None
 
 
 class RequestCreate(RequestBase):
@@ -22,10 +23,9 @@ class RequestRead(RequestBase):
     status: str
     is_active: bool
     created_at: datetime
-    updated_at: Optional[datetime]
+    updated_at: datetime | None
     sender: UserRead
     recipient: UserRead
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 

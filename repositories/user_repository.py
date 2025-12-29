@@ -110,7 +110,12 @@ async def create_user(session: AsyncSession, user_in: UserCreate) -> User:
         if "username" in str(e).lower():
             # Retry with a new random username
             username = f"@{secrets.token_hex(4)}"
-            user = User(email=str(user_in.email), full_name=full_name, username=username)
+            user = User(
+                email=str(user_in.email),
+                full_name=full_name,
+                username=username,
+                clerk_user_id=user_in.clerk_user_id,
+            )
             session.add(user)
             await session.flush()
         else:
