@@ -10,5 +10,6 @@ class Challenge(Base):
     title = Column(String, nullable=False)
     description = Column(Text, nullable=True)
     reward = Column(Integer, nullable=False)
+    image = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

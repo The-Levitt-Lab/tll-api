@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import re
 import secrets
-from typing import List, Optional
+from typing import List, Optional, Any
 
 from sqlalchemy import select
+from sqlalchemy.sql import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.models import User
+from db.models import User, Transaction
 from schemas import UserCreate
 
 
@@ -32,6 +33,26 @@ async def list_users(
 ) -> List[User]:
     result = await session.execute(select(User).offset(offset).limit(limit))
     return list(result.scalars().all())
+
+
+async def get_users_with_cumulative_earnings(
+    session: AsyncSession, *, offset: int = 0, limit: int = 100
+) -> List[Any]:
+    stmt = (
+        select(
+            User.id, 
+            User.username, 
+            User.full_name, 
+            func.coalesce(func.sum(Transaction.amount), 0).label("cumulative_earned")
+        )
+        .outerjoin(Transaction, (Transaction.user_id == User.id) & (Transaction.amount > 0))
+        .group_by(User.id)
+        .order_by(func.coalesce(func.sum(Transaction.amount), 0).desc())
+        .offset(offset)
+        .limit(limit)
+    )
+    result = await session.execute(stmt)
+    return result.all()
 
 
 def _generate_base_username(full_name: str) -> str:

@@ -26,9 +26,19 @@ async def create_challenge(session: AsyncSession, challenge_in: ChallengeCreate)
         title=challenge_in.title,
         description=challenge_in.description,
         reward=challenge_in.reward,
+        image=challenge_in.image,
     )
     session.add(challenge)
     await session.commit()
     await session.refresh(challenge)
     return challenge
+
+
+async def delete_challenge(session: AsyncSession, challenge_id: int) -> bool:
+    challenge = await session.get(Challenge, challenge_id)
+    if challenge:
+        await session.delete(challenge)
+        await session.commit()
+        return True
+    return False
 

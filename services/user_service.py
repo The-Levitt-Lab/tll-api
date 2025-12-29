@@ -10,11 +10,10 @@ from repositories import (
     get_user_by_id,
     list_users,
     update_user,
+    get_users_with_cumulative_earnings,
 )
 from schemas import UserCreate
 from schemas.transaction import TransactionCreate
-
-
 
 
 async def create_user_service(session: AsyncSession, user_in: UserCreate):
@@ -25,8 +24,14 @@ async def create_user_service(session: AsyncSession, user_in: UserCreate):
     # Create user
     user = await create_user(session, user_in)
     
-    # Record initial gift balance transaction if any (not strictly balance, but let's record 0 or create a welcome transaction if we want)
-    # User model has gift_balance=25 default. Let's not touch it for now unless requested.
+    # Record initial balance transaction
+    if user.balance > 0:
+        await create_transaction(session, TransactionCreate(
+            user_id=user.id,
+            amount=user.balance,
+            type="credit",
+            description="Welcome Bonus"
+        ))
     
     return user
 
@@ -69,3 +74,9 @@ async def update_user_balance_service(
     ))
     
     return user
+
+
+async def get_leaderboard_service(
+    session: AsyncSession, *, offset: int = 0, limit: int = 100
+):
+    return await get_users_with_cumulative_earnings(session, offset=offset, limit=limit)

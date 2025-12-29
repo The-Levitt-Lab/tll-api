@@ -8,6 +8,7 @@ class ChallengeBase(BaseModel):
     title: str
     description: str | None = None
     reward: int
+    image: str | None = None
 
 
 class ChallengeCreate(ChallengeBase):

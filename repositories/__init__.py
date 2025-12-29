@@ -4,6 +4,7 @@ from .user_repository import (
     get_user_by_id,
     list_users,
     update_user,
+    get_users_with_cumulative_earnings,
 )
 from .transaction_repository import (
     get_transactions_by_user_id,
@@ -19,6 +20,7 @@ __all__ = [
     "get_user_by_id",
     "list_users",
     "update_user",
+    "get_users_with_cumulative_earnings",
     "get_transactions_by_user_id",
     "create_transaction",
     "get_all_transactions",

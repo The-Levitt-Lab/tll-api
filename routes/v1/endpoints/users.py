@@ -7,7 +7,7 @@ from core.dependencies import get_current_user
 from db.models import User
 from db.session import get_db_session
 from repositories import get_transactions_by_user_id, get_requests_by_user_id
-from schemas import UserCreate, UserRead, RequestRead
+from schemas import UserCreate, UserRead, RequestRead, LeaderboardEntry
 from schemas.transaction import TransactionRead
 from services import (
     AlreadyExistsError,
@@ -15,6 +15,7 @@ from services import (
     get_user_service,
     list_users_service,
     create_user_service,
+    get_leaderboard_service,
 )
 from utils import PaginationParams
 
@@ -28,6 +29,13 @@ async def list_users(
 ):
     users = await list_users_service(db, offset=p.offset, limit=p.limit)
     return users
+
+
+@router.get("/leaderboard", response_model=list[LeaderboardEntry])
+async def get_leaderboard(
+    p: PaginationParams = Depends(), db: AsyncSession = Depends(get_db_session)
+):
+    return await get_leaderboard_service(db, offset=p.offset, limit=p.limit)
 
 
 @router.post("/", response_model=UserRead, status_code=201)

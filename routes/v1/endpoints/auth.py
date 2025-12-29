@@ -4,12 +4,14 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.exceptions import AlreadyExistsError
 from core.security import create_access_token
 from db.session import get_db_session
-from repositories.user_repository import create_user, get_user_by_email
+from repositories.user_repository import get_user_by_email
 from schemas.auth import LoginRequest, Token
 from schemas.user import UserCreate
 from services.auth_service import verify_token
+from services.user_service import create_user_service
 
 router = APIRouter()
 
@@ -29,8 +31,8 @@ async def login(data: LoginRequest, db: AsyncSession = Depends(get_db_session)) 
         # 3. Create user if not exists
         try:
             user_in = UserCreate(email=email, full_name=full_name)
-            user = await create_user(db, user_in)
-        except IntegrityError:
+            user = await create_user_service(db, user_in)
+        except (IntegrityError, AlreadyExistsError):
             # Race condition: another request created this user simultaneously
             # Rollback the failed transaction and fetch the existing user
             await db.rollback()

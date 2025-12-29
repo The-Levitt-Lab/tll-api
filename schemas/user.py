@@ -27,3 +27,12 @@ class UserRead(UserBase):
 
 class UserBalanceUpdate(BaseModel):
     amount: int
+
+
+class LeaderboardEntry(BaseModel):
+    id: int
+    username: str
+    full_name: str | None
+    cumulative_earned: int
+
+    model_config = ConfigDict(from_attributes=True)

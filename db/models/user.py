@@ -10,7 +10,7 @@ class User(Base):
     full_name = Column(String, nullable=False)
     username = Column(String, unique=True, index=True, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
-    balance = Column(Integer, default=0, nullable=False)
+    balance = Column(Integer, default=25, nullable=False)
     gift_balance = Column(Integer, default=25, nullable=False)
     role = Column(String, default="student", nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
